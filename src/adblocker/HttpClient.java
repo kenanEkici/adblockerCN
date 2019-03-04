@@ -3,8 +3,11 @@ package adblocker;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class HttpClient {
+
     public static void main(String[] args) {
 
         String httpCommand = args[0];
@@ -40,28 +43,13 @@ public class HttpClient {
             }
 
             resp.setBody(body);
-
-            System.out.println(resp.getBody());
-
-            // read the response
-//            boolean loop = true;
-//            StringBuilder sb = new StringBuilder(8096);
-//            while (loop) {
-//                if (in.ready()) {
-//                    int i = 0;
-//                    while (i != -1) {
-//                        i = in.read();
-//                        sb.append((char) i);
-//                    }
-//                    loop = false;
-//                }
-//            }
+            Files.write(Paths.get("websiteOutputs/test.html"), resp.getBody().getBytes());
 
             socket.close();
 
 
         } catch (IOException ex) {
-
+            System.out.println(ex.getMessage());
         }
     }
 }
