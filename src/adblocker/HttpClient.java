@@ -3,6 +3,9 @@ package adblocker;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 
 public class HttpClient {
 
@@ -44,6 +47,26 @@ public class HttpClient {
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
             return null;
+        }
+    }
+
+    public void downloadImage(String root, String uri) {
+
+    }
+
+    public void downloadImages(ArrayList<String> imageUris) {
+
+    }
+
+    public void identifyImages(String body) {
+
+    }
+
+    public void writeToHtml(String filename, String body) {
+        try {
+            Files.write(Paths.get("websiteOutputs/"+filename), body.getBytes());
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
         }
     }
 }
