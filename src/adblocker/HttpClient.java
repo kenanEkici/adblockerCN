@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 public class HttpClient {
 
@@ -24,24 +25,16 @@ public class HttpClient {
             out.println();
 
             HttpResponse resp = new HttpResponse();
-            String line = in.readLine();
 
+            String line = in.readLine();
             while (line != null && !line.equals("")) {
                 resp.appendToHeader(line);
                 line = in.readLine();
             }
 
-            String body = "";
-
-            while (line != null) {
-                body += line;
-                line = in.readLine();
-            }
-
+            String body = in.readLine();
             resp.setBody(body);
-
             socket.close();
-
             return resp;
 
         } catch (IOException ex) {
@@ -50,15 +43,15 @@ public class HttpClient {
         }
     }
 
-    public void downloadImage(String root, String uri) {
+    private void downloadImage(String root, String uri) {
 
     }
 
-    public void downloadImages(ArrayList<String> imageUris) {
+    private void downloadImages(ArrayList<String> imageUris) {
 
     }
 
-    public void identifyImages(String body) {
+    private void identifyImages(String body) {
 
     }
 
