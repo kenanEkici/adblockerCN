@@ -7,10 +7,7 @@ public abstract class HttpMessage {
 
     private Map<String, String> header = new HashMap<>();
     private String body;
-
-    private String protocolVersion;
-    private int responseCode;
-    private String responseMessage;
+    private String protocolVersion = "HTTP/1.1";
 
     public Map<String, String> getHeader() {
         return header;
@@ -30,23 +27,8 @@ public abstract class HttpMessage {
         this.protocolVersion = protocolVersion;
     }
 
-    public void setResponseMessage(String responseMessage) {
-        this.responseMessage = responseMessage;
-    }
-
-    public void setResponseCode(int responseCode) {
-        this.responseCode = responseCode;
-    }
-
-    public int getResponseCode() {
-        return responseCode;
-    }
-
     public String getProtocolVersion() {
         return protocolVersion;
     }
 
-    public String getResponseMessage() {
-        return responseMessage;
-    }
 }

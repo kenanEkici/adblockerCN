@@ -4,11 +4,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class HttpServer implements Runnable {
+public class HttpServer {
 
-
-
-    @Override
     public void run() {
         try {
             ServerSocket socket = new ServerSocket(1024);
@@ -16,14 +13,19 @@ public class HttpServer implements Runnable {
             while(true) {
                 Socket client = socket.accept();
                 if (client != null) {
-                    ResponseHandler handler = new ResponseHandler(client);
+                    RequestHandler handler = new RequestHandler(client);
                     Thread t = new Thread(handler);
-                    t.start();
+                    t.run();
                 }
             }
         } catch(IOException ex) {
             System.out.println(ex.getMessage());
         }
+    }
+
+    public static void main(String[] args) {
+        HttpServer webServer = new HttpServer();
+        webServer.run();
     }
 
 }
