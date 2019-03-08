@@ -22,9 +22,10 @@ public class RequestHandler implements Runnable {
         try {
             // our request stream
             BufferedReader clientRequest = new BufferedReader(new InputStreamReader(client.getInputStream()));
-
             // our response stream
             DataOutputStream clientResponse = new DataOutputStream(client.getOutputStream());
+
+            boolean isHead = false;
 
             // this is our header information
             // for example, GET / HTTP/1.1
@@ -44,7 +45,7 @@ public class RequestHandler implements Runnable {
             //we handle our request
             switch (request.getHttpMethod()) {
                 case "GET": resp = handleGET(request); break;
-                case "HEAD": resp = handleHEAD(request); break;
+                case "HEAD": resp = handleGET(request); isHead = true; break;
                 case "POST": resp = handlePOST(request); break;
                 case "PUT": resp = handlePUT(request); break;
             }
@@ -56,7 +57,6 @@ public class RequestHandler implements Runnable {
             clientResponse.writeBytes(resp.getProtocolVersion()+ " " + resp.getResponseCode() + " " + resp.getResponseMessage() +"\r\n");
             clientResponse.writeBytes("Date: " + dateFormat.format(date) + "\r\n");
             clientResponse.writeBytes("Content-Type: " + resp.getContentType() + "\r\n");
-
 
             // James F Kurose - Computer networks
             File file = null;
@@ -70,21 +70,18 @@ public class RequestHandler implements Runnable {
                 fileBytes = new byte[byteLength];
                 fileStream.read(fileBytes);
                 clientResponse.writeBytes("Content-Length: " + byteLength + "\r\n");
+                clientResponse.writeBytes("\r\n");
+                if (!isHead)
+                    clientResponse.write(fileBytes, 0, byteLength);
             }
             else {
                 clientResponse.writeBytes("Content-Length: " + resp.getBody().length() + "\r\n");
-            }
-
-            clientResponse.writeBytes("\r\n");
-
-            //idem for body
-            if (resp.getContentType() == "image/jpg") {
-                clientResponse.write(fileBytes, 0, byteLength);
-                clientResponse.writeBytes("\n");
-            } else {
+                clientResponse.writeBytes("\r\n");
+                if (!isHead)
                 clientResponse.writeBytes(resp.getBody());
-                clientResponse.writeBytes("\n");
             }
+
+            clientResponse.writeBytes("\n");
 
             clientResponse.close();
 
@@ -93,32 +90,52 @@ public class RequestHandler implements Runnable {
         }
     }
 
-    private HttpResponse handleHEAD(HttpRequest request) {
-        return null;
-    }
-
     private HttpResponse handleGET(HttpRequest request) {
         HttpResponse response = new HttpResponse();
+        String route = request.getRoute();
+
+        if (!routeExists(route)) {
+            response.setBody("");
+            response.setResponseCode(404);
+            response.setResponseMessage("Not found");
+            response.setContentType("text/plain");
+            return response;
+        }
 
         try {
-            if (request.getRoute().equals("/")) {
+            if (request.getRoute().equals("/") || request.getRoute().endsWith(".html")) {
                 BufferedReader in = new BufferedReader(new FileReader("webpage/index.html"));
                 response.setBody(in.lines().collect(Collectors.joining()));
                 response.setContentType("text/html");
                 response.setResponseMessage("OK");
                 response.setResponseCode(200);
-            } else {
+            } else if (request.getRoute().endsWith(".jpg")) {
                 response.setContentType("image/jpg");
                 response.setResponseMessage("OK");
                 response.setResponseCode(200);
             }
         } catch (FileNotFoundException e) {
             response.setResponseMessage("Not found");
-            response.setResponseCode(400);
+            response.setResponseCode(404);
             response.setBody("");
         }
 
         return response;
+    }
+
+    private boolean routeExists(String route) {
+        File directory = new File("webpage");
+        File[] listOfFiles = directory.listFiles();
+
+        //root
+        if (route.equals("/")) return true;
+
+        if (listOfFiles != null)
+            for(File f : listOfFiles)
+                if (f.isFile())
+                    if (f.getName().equals(route.substring(1)))
+                        return true;
+        return false;
     }
 
     private HttpResponse handlePOST(HttpRequest request) {

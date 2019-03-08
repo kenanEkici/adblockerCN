@@ -18,7 +18,7 @@ public class HttpClient {
 
             Socket socket = new Socket(root, portNumber);
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            DataInputStream in = new DataInputStream(socket.getInputStream());
 
             // send request
             out.println(httpCommand + " " + route + " " + "HTTP/1.1");
@@ -48,20 +48,22 @@ public class HttpClient {
             }
 
             if (contentType.equals("image/jpg")) {
-                InputStream in2 = socket.getInputStream();
-                OutputStream out2 = new FileOutputStream("websiteOutputs/"+route);
 
-                out2.write(in2.readAllBytes());
+                OutputStream fileWriter = new FileOutputStream("websiteOutputs/"+route);
 
-                out2.close();
-                in2.close();
+                int count;
+                byte[] buffer = new byte[8192]; // or 4096, or more
+                while ((count = in.read(buffer)) > 0)
+                {
+                    fileWriter.write(buffer, 0, count);
+                }
 
+                fileWriter.close();
             }
 
             socket.close();
             out.close();
             in.close();
-
             return resp;
 
         } catch (IOException ex) {
