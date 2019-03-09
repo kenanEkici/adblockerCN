@@ -23,7 +23,8 @@ public class RequestHandler implements Runnable {
             // our request stream
             BufferedReader inStream = new BufferedReader(new InputStreamReader(client.getInputStream()));
             // our response stream
-            DataOutputStream outStream = new DataOutputStream(client.getOutputStream());
+            PrintWriter out = new PrintWriter(client.getOutputStream());
+            BufferedOutputStream byteOut= new BufferedOutputStream(client.getOutputStream());
 
             // this is our header information
             // for example, GET / HTTP/1.1
@@ -32,15 +33,15 @@ public class RequestHandler implements Runnable {
 
             //we handle our request by method
             switch (request.getHttpMethod()) {
-                case "GET": handleGET(outStream, request, false); break;
-                case "HEAD": handleGET(outStream, request, true); break;
-                case "POST": handlePOST(outStream, request); break;
-                case "PUT": handlePUT(outStream, request); break;
+                case "GET": handleGET(out, byteOut, request, false); break;
+                case "HEAD": handleGET(out, byteOut, request, true); break;
+                case "POST": handlePOST(out, request); break;
+                case "PUT": handlePUT(out, request); break;
                 default: //TODO
             }
-            outStream.writeBytes("\r\n"); //EOR
 
-            outStream.close();
+            out.close();
+            byteOut.close();
             inStream.close();
             client.close();
 
@@ -62,20 +63,21 @@ public class RequestHandler implements Runnable {
         return new HttpRequest(method, route, version);
     }
 
-    private void handleOutGoingHeader(DataOutputStream out, HttpResponse resp) throws IOException {
+    private void handleOutGoingHeader(PrintWriter out, HttpResponse resp) throws IOException {
         DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         Date date = new Date();
 
         //we create and send a new header for the response
-        out.writeBytes(resp.getProtocolVersion()+ " " + resp.getResponseCode() + " " + resp.getResponseMessage() +"\r\n");
-        out.writeBytes("Date: " + dateFormat.format(date) + "\r\n");
-        out.writeBytes("Content-Type: " + resp.getContentType() + "\r\n");
-        if (!resp.getTransferEncoding().equals("none")) out.writeBytes("Transfer-Encoding: " + resp.getTransferEncoding() + "\r\n");
-        else out.writeBytes("Content-Length: " + resp.getContentLength() + "\r\n");
-        out.writeBytes("\r\n"); //EOH
+        out.println(resp.getProtocolVersion()+ " " + resp.getResponseCode() + " " + resp.getResponseMessage());
+        out.println("Date: " + dateFormat.format(date));
+        out.println("Content-Type: " + resp.getContentType());
+        if (!resp.getTransferEncoding().equals("none")) out.println("Transfer-Encoding: " + resp.getTransferEncoding());
+        else out.println("Content-Length: " + resp.getContentLength());
+        out.println(); //EOH
+        out.flush();
     }
 
-    private void handleGET(DataOutputStream out, HttpRequest request, boolean isHead) throws IOException {
+    private void handleGET(PrintWriter out, BufferedOutputStream byteOut, HttpRequest request, boolean isHead) throws IOException {
         HttpResponse response = new HttpResponse();
         String route = request.getRoute();
 
@@ -98,27 +100,25 @@ public class RequestHandler implements Runnable {
                 response.setContentLength(response.getBody().getBytes().length);
                 handleOutGoingHeader(out, response);
 
-                if (!isHead)
-                    out.writeBytes(response.getBody());
+                if (!isHead) {
+                    out.println(response.getBody());
+                    out.flush();
+                }
             } else {
                 response.setContentType("image/jpg");
                 response.setResponseMessage("OK");
                 response.setResponseCode(200);
-                File file = null;
-                int byteLength = 0;
-                byte[] fileBytes = null;
 
-                file = new File("webpage/" + request.getRoute().substring(1));
-                byteLength = (int) file.length();
-                response.setContentLength(byteLength);
+                File file = new File("webpage/" + request.getRoute().substring(1));
+                int length = (int) file.length();
+                byte[] content = readFileData(file, length);
+                response.setContentLength(length);
                 handleOutGoingHeader(out, response);
 
-
-                FileInputStream fileStream = new FileInputStream("webpage/" + request.getRoute().substring(1));
-                fileBytes = new byte[byteLength];
-                fileStream.read(fileBytes);
-                if (!isHead)
-                    out.write(fileBytes, 0, byteLength);
+                if (!isHead) {
+                    byteOut.write(content, 0, length);
+                    byteOut.flush();
+                }
             }
         } catch (FileNotFoundException e) {
             response.setResponseMessage("Not found");
@@ -144,12 +144,27 @@ public class RequestHandler implements Runnable {
         return false;
     }
 
-    private void handlePOST(DataOutputStream out, HttpRequest request) {
+    private void handlePOST(PrintWriter out, HttpRequest request) {
 
     }
 
-    private void handlePUT(DataOutputStream out, HttpRequest request) {
+    private void handlePUT(PrintWriter out, HttpRequest request) {
 
+    }
+
+    private byte[] readFileData(File file, int fileLength) throws IOException {
+        FileInputStream fileIn = null;
+        byte[] fileData = new byte[fileLength];
+
+        try {
+            fileIn = new FileInputStream(file);
+            fileIn.read(fileData);
+        } finally {
+            if (fileIn != null)
+                fileIn.close();
+        }
+
+        return fileData;
     }
 
 

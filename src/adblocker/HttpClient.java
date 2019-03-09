@@ -6,14 +6,13 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Scanner;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class HttpClient {
+class HttpClient {
 
-    private Adblocker blocker;
-
-    public HttpResponse sendRequest(String root, String route, int portNumber, String httpCommand) {
+    void sendRequest(String root, String route, int portNumber, String httpCommand) {
         try {
 
             Socket socket = new Socket(root, portNumber);
@@ -32,47 +31,45 @@ public class HttpClient {
             String line = in.readLine();
             while (line != null && !line.equals("")) {
                 resp.appendToHeader(line);
+                System.out.println(line);
                 line = in.readLine();
             }
 
             String contentType = resp.getHeader().get("Content-Type");
 
-            if (contentType.equals("text/html")) {
-                String body = in.readLine();
-                resp.setBody(body);
-                writeToHtml("test.html", body);
-
-                for(String uri: findImageSourceList(body)){
-                    sendRequest(root, route+uri, portNumber, "GET");
+            if (contentType.contains("text/html")) {
+                String body = "";
+                while ((line = in.readLine()) != null) {
+                    body += line;
+                    System.out.println(line);
                 }
-            }
+                //write adless html to file
+                Adblocker blocker = new Adblocker(new String[]{"ad1.jpg","ad2.jpg", "ad3.jpg"});
+                String newBody = blocker.snipAds(body);
+                resp.setBody(newBody);
+                writeToHtml(newBody);
 
-            if (contentType.equals("image/jpg")) {
+                ArrayList<String> uriList = findImageSourceList(body);
 
-                OutputStream fileWriter = new FileOutputStream("websiteOutputs/"+route);
-
-                int count;
-                byte[] buffer = new byte[8192]; // or 4096, or more
-                while ((count = in.read(buffer)) > 0)
-                {
-                    fileWriter.write(buffer, 0, count);
+                //avoid downloading ads
+                for(String cleanUri: blocker.cleanseUris(uriList) ) {
+                    sendRequest(root, route+cleanUri, portNumber, "GET");
                 }
 
-                fileWriter.close();
+            } else {
+                System.out.println("A file is being written");
+                writeToFile(in, route);
             }
 
-            socket.close();
             out.close();
             in.close();
-            return resp;
-
+            socket.close();
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
-            return null;
         }
     }
 
-    public ArrayList<String> findImageSourceList(String body) {
+    private ArrayList<String> findImageSourceList(String body) {
         ArrayList<String> images = new ArrayList<>();
 
         int index = body.indexOf("src=\"");
@@ -85,11 +82,30 @@ public class HttpClient {
         return images;
     }
 
-    private void writeToHtml(String filename, String body) {
+    private void writeToHtml(String body) {
         try {
-            Files.write(Paths.get("websiteOutputs/"+filename), body.getBytes());
+            Files.write(Paths.get("websiteOutputs/index.html"), body.getBytes());
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
+    }
+
+    private void writeToFile(DataInputStream in, String fileName) throws IOException {
+        int lastSlash = fileName.lastIndexOf("/");
+        String directories = fileName.substring(0,lastSlash);
+        File directory = new File("websiteOutputs/"+directories);
+        if (! directory.exists()){
+            directory.mkdirs();
+        }
+        OutputStream fileWriter = new FileOutputStream("websiteOutputs/"+fileName);
+
+        int count;
+        byte[] buffer = new byte[8192]; // or 4096, or more
+        while ((count = in.read(buffer)) > 0)
+        {
+            fileWriter.write(buffer, 0, count);
+        }
+
+        fileWriter.close();
     }
 }

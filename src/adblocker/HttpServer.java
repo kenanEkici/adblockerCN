@@ -15,7 +15,7 @@ public class HttpServer {
                 if (client != null) {
                     RequestHandler handler = new RequestHandler(client);
                     Thread t = new Thread(handler);
-                    t.run();
+                    t.start();
                 }
             }
         } catch(IOException ex) {
