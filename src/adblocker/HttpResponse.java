@@ -5,6 +5,8 @@ public class HttpResponse extends HttpMessage {
     private int responseCode;
     private String responseMessage;
     private String contentType;
+    private int contentLength;
+    private String transferEncoding = "none";
 
     public void appendToHeader(String line) {
         int colon = line.indexOf(":");
@@ -43,5 +45,21 @@ public class HttpResponse extends HttpMessage {
 
     public String getResponseMessage() {
         return responseMessage;
+    }
+
+    public int getContentLength() {
+        return contentLength;
+    }
+
+    public void setContentLength(int contentLength) {
+        this.contentLength = contentLength;
+    }
+
+    public String getTransferEncoding() {
+        return transferEncoding;
+    }
+
+    public void setTransferEncoding(String transferEncoding) {
+        this.transferEncoding = transferEncoding;
     }
 }
