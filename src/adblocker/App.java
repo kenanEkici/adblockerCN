@@ -2,7 +2,7 @@ package adblocker;
 
 public class App {
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
 
         // create client and send request
         HttpClient client = new HttpClient();

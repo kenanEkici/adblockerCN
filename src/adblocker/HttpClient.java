@@ -36,13 +36,32 @@ class HttpClient {
             }
 
             String contentType = resp.getHeader().get("Content-Type");
+            String length = resp.getHeader().get("Content-Length");
+            String encoding = resp.getHeader().get("Transfer-Encoding");
 
             if (contentType.contains("text/html")) {
                 String body = "";
-                while ((line = in.readLine()) != null) {
-                    body += line;
-                    System.out.println(line);
+
+                // if content length is available, read byte per byte
+                if (length != null) {
+                    int len = Integer.parseInt(length);
+                    char c;
+
+                    while (len > 0) {
+                        c = ((char)in.readByte());
+                        body += c;
+                        len--;
+                    }
+                    System.out.println(body);
                 }
+                //otherwise we rely on chunked transfer encoding
+                else {
+                    while ((line = in.readLine()) != null) {
+                        body += line;
+                        System.out.println(line);
+                    }
+                }
+
                 //write adless html to file
                 Adblocker blocker = new Adblocker(new String[]{"ad1.jpg","ad2.jpg", "ad3.jpg"});
                 String newBody = blocker.snipAds(body);
@@ -55,10 +74,20 @@ class HttpClient {
                 for(String cleanUri: blocker.cleanseUris(uriList) ) {
                     sendRequest(root, route+cleanUri, portNumber, "GET");
                 }
-
-            } else {
-                System.out.println("A file is being written");
-                writeToFile(in, route);
+            }
+            else {
+                // write by chunks
+                if (length == null && encoding != null) {
+                    if (encoding.equals("chunked")) {
+                        System.out.println("A file is being written by chunks");
+                        writeToFile(in, route, 0, true);
+                    }
+                }
+                // write by content length
+                else {
+                    System.out.println("A file is being written by content length");
+                    writeToFile(in, route,Integer.parseInt(length), false);
+                }
             }
 
             out.close();
@@ -90,7 +119,7 @@ class HttpClient {
         }
     }
 
-    private void writeToFile(DataInputStream in, String fileName) throws IOException {
+    private void writeToFile(DataInputStream in, String fileName, int contentLength, boolean isChunked) throws IOException {
         int lastSlash = fileName.lastIndexOf("/");
         String directories = fileName.substring(0,lastSlash);
         File directory = new File("websiteOutputs/"+directories);

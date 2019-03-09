@@ -13,7 +13,9 @@ public class Adblocker {
     String snipAds(String body) {
         for (String keyword: blackList) {
             int index = body.indexOf(keyword);
-            body = body.substring(0, index) + "../adblocker/placeholder.png" + body.substring(index+keyword.length());
+            if (index != -1) {
+                body = body.substring(0, index) + "../adblocker/placeholder.png" + body.substring(index+keyword.length());
+            }
         }
         return body;
     }

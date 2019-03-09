@@ -113,6 +113,7 @@ public class RequestHandler implements Runnable {
                 int length = (int) file.length();
                 byte[] content = readFileData(file, length);
                 response.setContentLength(length);
+
                 handleOutGoingHeader(out, response);
 
                 if (!isHead) {

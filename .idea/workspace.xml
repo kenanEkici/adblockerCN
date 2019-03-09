@@ -3,10 +3,12 @@
   <component name="ChangeListManager">
     <list default="true" id="a8756162-ebb4-4a54-912b-5cc2bcc04cd9" name="Default Changelist" comment="">
       <change afterPath="$PROJECT_DIR$/websiteOutputs/index.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/websiteOutputs/robot.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/websiteOutputs/solar.jpg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/adblocker/Adblocker.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/adblocker/Adblocker.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/adblocker/App.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/adblocker/App.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/adblocker/HttpClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/adblocker/HttpClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/adblocker/HttpServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/adblocker/HttpServer.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/adblocker/RequestHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/adblocker/RequestHandler.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -28,17 +30,17 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="html" value="28" />
-          <entry key="java" value="62" />
+          <entry key="html" value="31" />
+          <entry key="java" value="72" />
           <entry key="jpg" value="29" />
           <entry key="snippet" value="1" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="HTML" value="28" />
+          <entry key="HTML" value="31" />
           <entry key="Image" value="29" />
-          <entry key="JAVA" value="62" />
+          <entry key="JAVA" value="72" />
           <entry key="Scratch" value="1" />
         </counts>
       </usages-collector>
@@ -46,13 +48,13 @@
         <counts>
           <entry key="dummy" value="15" />
           <entry key="html" value="36" />
-          <entry key="java" value="18828" />
+          <entry key="java" value="20687" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="HTML" value="36" />
-          <entry key="JAVA" value="18828" />
+          <entry key="JAVA" value="20687" />
           <entry key="PLAIN_TEXT" value="15" />
         </counts>
       </usages-collector>
@@ -60,20 +62,20 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/adblocker/HttpClient.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="47" column="31" selection-start-line="47" selection-start-column="31" selection-end-line="47" selection-end-column="31" />
+            <state relative-caret-position="262">
+              <caret line="66" selection-start-line="66" selection-end-line="66" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/adblocker/HttpResponse.java">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/adblocker/Adblocker.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="181">
-              <caret line="16" column="16" selection-start-line="16" selection-start-column="16" selection-end-line="16" selection-end-column="16" />
+            <state relative-caret-position="240">
+              <caret line="18" column="9" lean-forward="true" selection-start-line="18" selection-start-column="9" selection-end-line="18" selection-end-column="9" />
             </state>
           </provider>
         </entry>
@@ -81,8 +83,17 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/adblocker/App.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="120">
-              <caret line="8" selection-start-line="8" selection-end-line="8" />
+            <state relative-caret-position="60">
+              <caret line="4" column="43" selection-start-line="4" selection-start-column="43" selection-end-line="4" selection-end-column="43" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/websiteOutputs/index.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state>
+              <caret column="22" selection-start-column="22" selection-end-column="22" />
             </state>
           </provider>
         </entry>
@@ -90,17 +101,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/adblocker/RequestHandler.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="15">
-              <caret line="115" column="52" selection-start-line="115" selection-start-column="52" selection-end-line="115" selection-end-column="52" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/adblocker/Adblocker.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="240">
-              <caret line="18" column="5" lean-forward="true" selection-start-line="18" selection-start-column="5" selection-end-line="18" selection-end-column="5" />
+            <state relative-caret-position="196">
+              <caret line="75" column="20" selection-start-line="75" selection-start-column="20" selection-end-line="75" selection-end-column="20" />
             </state>
           </provider>
         </entry>
@@ -137,8 +139,8 @@
         <option value="$PROJECT_DIR$/src/adblocker/HttpResponse.java" />
         <option value="$PROJECT_DIR$/src/adblocker/App.java" />
         <option value="$PROJECT_DIR$/src/adblocker/RequestHandler.java" />
-        <option value="$PROJECT_DIR$/src/adblocker/Adblocker.java" />
         <option value="$PROJECT_DIR$/src/adblocker/HttpClient.java" />
+        <option value="$PROJECT_DIR$/src/adblocker/Adblocker.java" />
       </list>
     </option>
   </component>
@@ -171,6 +173,11 @@
               <item name="src" type="9f88c78c:ScopeViewTreeModel$FileNode" />
               <item name="adblocker" type="9f88c78c:ScopeViewTreeModel$FileNode" />
             </path>
+            <path>
+              <item name="adblockerCN" type="3d21c010:ScopeViewTreeModel$ProjectNode" />
+              <item name="adblockerCN" type="2674bda8:ScopeViewTreeModel$GroupNode" />
+              <item name="websiteOutputs" type="9f88c78c:ScopeViewTreeModel$FileNode" />
+            </path>
           </expand>
           <select />
         </subPane>
@@ -201,7 +208,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="DefaultHtmlFileTemplate" value="HTML File" />
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1552165919463" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1552171674023" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../../../../Software_Ontwerp" />
     <property name="project.structure.last.edited" value="Project" />
     <property name="project.structure.proportion" value="0.0" />
@@ -224,7 +231,7 @@
     <configuration name="App" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="adblocker.App" />
       <module name="adblockerCN" />
-      <option name="PROGRAM_PARAMETERS" value="&quot;localhost&quot; &quot;/&quot; 1024 &quot;GET&quot;" />
+      <option name="PROGRAM_PARAMETERS" value="&quot;www.google.com&quot; &quot;/&quot; 80 &quot;GET&quot;" />
       <extension name="coverage">
         <pattern>
           <option name="PATTERN" value="adblocker.*" />
@@ -305,8 +312,8 @@
       <window_info anchor="bottom" id="Version Control" order="3" weight="0.3281493" />
       <window_info anchor="bottom" id="Message" order="4" />
       <window_info anchor="bottom" id="Find" order="5" weight="0.32866043" />
-      <window_info active="true" anchor="bottom" id="Run" order="6" visible="true" weight="0.32866043" />
-      <window_info anchor="bottom" id="Debug" order="7" weight="0.39719626" />
+      <window_info anchor="bottom" id="Run" order="6" weight="0.32866043" />
+      <window_info active="true" anchor="bottom" id="Debug" order="7" visible="true" weight="0.39719626" />
       <window_info anchor="bottom" id="Cvs" order="8" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="9" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="10" />
@@ -324,11 +331,22 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/adblocker/HttpClient.java</url>
+          <line>66</line>
+          <properties />
+          <option name="timeStamp" value="40" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
     <watches-manager>
       <configuration name="Application">
         <watch expression="arr" />
         <watch expression="getHeader" />
         <watch expression="string" />
+        <watch expression="System.getProperty(&quot;line.separator&quot;)" />
       </configuration>
     </watches-manager>
   </component>
@@ -382,50 +400,56 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/adblocker/HttpServer.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="8" column="23" lean-forward="true" selection-start-line="8" selection-start-column="23" selection-end-line="8" selection-end-column="23" />
+        <state relative-caret-position="105">
+          <caret line="9" column="13" lean-forward="true" selection-start-line="9" selection-start-column="13" selection-end-line="9" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/adblocker/HttpResponse.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-368">
+          <caret line="8" column="43" selection-start-line="8" selection-start-column="43" selection-end-line="8" selection-end-column="43" />
+          <folding>
+            <element signature="e#1591#1592#0" expanded="true" />
+            <element signature="e#1630#1631#0" expanded="true" />
+            <element signature="e#1694#1695#0" expanded="true" />
+            <element signature="e#1750#1751#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/adblocker/App.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="60">
+          <caret line="4" column="43" selection-start-line="4" selection-start-column="43" selection-end-line="4" selection-end-column="43" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/websiteOutputs/index.html">
       <provider selected="true" editor-type-id="text-editor">
         <state>
-          <caret column="24" selection-start-column="24" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/adblocker/App.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="8" selection-start-line="8" selection-end-line="8" />
+          <caret column="22" selection-start-column="22" selection-end-column="22" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/adblocker/RequestHandler.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="115" column="52" selection-start-line="115" selection-start-column="52" selection-end-line="115" selection-end-column="52" />
+        <state relative-caret-position="196">
+          <caret line="75" column="20" selection-start-line="75" selection-start-column="20" selection-end-line="75" selection-end-column="20" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/adblocker/HttpResponse.java">
+    <entry file="file://$PROJECT_DIR$/src/adblocker/HttpClient.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="181">
-          <caret line="16" column="16" selection-start-line="16" selection-start-column="16" selection-end-line="16" selection-end-column="16" />
+        <state relative-caret-position="262">
+          <caret line="66" selection-start-line="66" selection-end-line="66" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/adblocker/Adblocker.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="240">
-          <caret line="18" column="5" lean-forward="true" selection-start-line="18" selection-start-column="5" selection-end-line="18" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/adblocker/HttpClient.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="47" column="31" selection-start-line="47" selection-start-column="31" selection-end-line="47" selection-end-column="31" />
+          <caret line="18" column="9" lean-forward="true" selection-start-line="18" selection-start-column="9" selection-end-line="18" selection-end-column="9" />
         </state>
       </provider>
     </entry>
