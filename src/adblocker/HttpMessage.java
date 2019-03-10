@@ -13,6 +13,8 @@ public abstract class HttpMessage {
         return header;
     }
 
+    public abstract void appendToHeader(String line);
+
     public void appendToHeader(String key, String value) {
         this.header.put(key, value);
     }

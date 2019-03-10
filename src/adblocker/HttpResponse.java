@@ -8,6 +8,7 @@ public class HttpResponse extends HttpMessage {
     private int contentLength;
     private String transferEncoding = "none";
 
+    @Override
     public void appendToHeader(String line) {
         int colon = line.indexOf(":");
         if (!(colon == -1)) {
@@ -16,7 +17,7 @@ public class HttpResponse extends HttpMessage {
             super.appendToHeader(key.trim(), value.trim());
         } else {
             int code = line.indexOf(" ");
-            int codeAfter = line.lastIndexOf(" ");
+            int codeAfter = line.indexOf(" ", code+1);
             setProtocolVersion(line.substring(0, code));
             setResponseCode(Integer.parseInt(line.substring(code+1, codeAfter)));
             setResponseMessage(line.substring(codeAfter));

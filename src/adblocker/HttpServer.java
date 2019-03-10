@@ -6,14 +6,14 @@ import java.net.Socket;
 
 public class HttpServer {
 
-    public void run() {
+    private void run() {
         try {
             ServerSocket socket = new ServerSocket(1024);
 
             while(true) {
                 Socket client = socket.accept();
                 if (client != null) {
-                    RequestHandler handler = new RequestHandler(client);
+                    HttpRequestHandler handler = new HttpRequestHandler(client);
                     Thread t = new Thread(handler);
                     t.start();
                 }

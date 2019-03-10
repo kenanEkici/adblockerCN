@@ -12,16 +12,16 @@ import java.util.stream.Collectors;
 
 class HttpClient {
 
-    void sendRequest(String root, String route, int portNumber, String httpCommand) {
+    void sendRequest(String host, String route, int portNumber, String httpCommand) {
         try {
 
-            Socket socket = new Socket(root, portNumber);
+            Socket socket = new Socket(host, portNumber);
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
             DataInputStream in = new DataInputStream(socket.getInputStream());
 
             // send request
             out.println(httpCommand + " " + route + " " + "HTTP/1.1");
-            out.println("Host: " + root + ":" + Integer.toString(portNumber));
+            out.println("Host: " + host + ":" + Integer.toString(portNumber));
             out.println("Connection: Close");
             out.println();
 
@@ -39,54 +39,55 @@ class HttpClient {
             String length = resp.getHeader().get("Content-Length");
             String encoding = resp.getHeader().get("Transfer-Encoding");
 
-            if (contentType.contains("text/html")) {
-                String body = "";
+            if (resp.getResponseCode() < 400) {
+                if (contentType.contains("text/html")) {
+                    String body = "";
 
-                // if content length is available, read byte per byte
-                if (length != null) {
-                    int len = Integer.parseInt(length);
-                    char c;
+                    // if content length is available, read byte per byte
+                    if (length != null) {
+                        int len = Integer.parseInt(length);
+                        char c;
 
-                    while (len > 0) {
-                        c = ((char)in.readByte());
-                        body += c;
-                        len--;
+                        while (len > 0) {
+                            c = ((char) in.readByte());
+                            body += c;
+                            len--;
+                        }
+                        System.out.println(body);
                     }
-                    System.out.println(body);
-                }
-                //otherwise we rely on chunked transfer encoding
-                else {
-                    while ((line = in.readLine()) != null) {
-                        body += line;
-                        System.out.println(line);
+                    //otherwise we rely on chunked transfer encoding
+                    else {
+                        while ((line = in.readLine()) != null) {
+                            body += line;
+                            System.out.println(line);
+                        }
                     }
-                }
 
-                //write adless html to file
-                Adblocker blocker = new Adblocker(new String[]{"ad1.jpg","ad2.jpg", "ad3.jpg"});
-                String newBody = blocker.snipAds(body);
-                resp.setBody(newBody);
-                writeToHtml(newBody);
+                    //write adless html to file
+                    Adblocker blocker = new Adblocker(new String[]{"ad1.jpg", "ad2.jpg", "ad3.jpg"});
+                    String newBody = blocker.snipAds(body);
+                    resp.setBody(newBody);
+                    writeToHtml(newBody);
 
-                ArrayList<String> uriList = findImageSourceList(body);
+                    ArrayList<String> uriList = findImageSourceList(body);
 
-                //avoid downloading ads
-                for(String cleanUri: blocker.cleanseUris(uriList) ) {
-                    sendRequest(root, route+cleanUri, portNumber, "GET");
-                }
-            }
-            else {
-                // write by chunks
-                if (length == null && encoding != null) {
-                    if (encoding.equals("chunked")) {
-                        System.out.println("A file is being written by chunks");
-                        writeToFile(in, route, 0, true);
+                    //avoid downloading ads
+                    for (String cleanUri : blocker.cleanseUris(uriList)) {
+                        sendRequest(host, route + cleanUri, portNumber, "GET");
                     }
-                }
-                // write by content length
-                else {
-                    System.out.println("A file is being written by content length");
-                    writeToFile(in, route,Integer.parseInt(length), false);
+                } else {
+                    // write by chunks
+                    if (length == null && encoding != null) {
+                        if (encoding.equals("chunked")) {
+                            System.out.println("A file is being written by chunks");
+                            writeToFile(in, route, 0, true);
+                        }
+                    }
+                    // write by content length
+                    else {
+                        System.out.println("A file is being written by content length");
+                        writeToFile(in, route, Integer.parseInt(length), false);
+                    }
                 }
             }
 
