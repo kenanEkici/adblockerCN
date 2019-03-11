@@ -1,14 +1,10 @@
 package adblocker;
 
 import java.io.*;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Scanner;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 class HttpClient {
 
@@ -72,6 +68,7 @@ class HttpClient {
                     ArrayList<String> uriList = findImageSourceList(body);
 
                     //avoid downloading ads
+                    //TODO just check if placeholder image or not
                     for (String cleanUri : blocker.cleanseUris(uriList)) {
                         sendRequest(host, route + cleanUri, portNumber, "GET");
                     }

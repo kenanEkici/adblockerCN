@@ -20,11 +20,12 @@ public class HttpRequestHandler implements Runnable {
 
     @Override
     public void run() {
+        PrintWriter out = null;
         try {
             // our request stream
             BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
             // our response streams
-            PrintWriter out = new PrintWriter(client.getOutputStream());
+            out = new PrintWriter(client.getOutputStream());
             BufferedOutputStream byteOut= new BufferedOutputStream(client.getOutputStream());
 
             // read our header
@@ -57,6 +58,7 @@ public class HttpRequestHandler implements Runnable {
             client.close();
 
         } catch (IOException ex) {
+            throwServerErrorRequest(out, new HttpResponse());
             System.out.println(ex.getMessage());
         }
     }
@@ -166,12 +168,17 @@ public class HttpRequestHandler implements Runnable {
         handleOutGoingHeader(out, resp);
     }
 
-    private void throwServerErrorRequest(PrintWriter out, HttpResponse resp) throws IOException {
-        resp.setResponseMessage("Server Error");
-        resp.setResponseCode(500);
-        resp.setContentType("text/plain");
+    private void throwServerErrorRequest(PrintWriter out, HttpResponse resp) {
+        try {
+            resp.setResponseMessage("Server Error");
+            resp.setResponseCode(500);
+            resp.setContentType("text/plain");
 
-        handleOutGoingHeader(out, resp);
+            handleOutGoingHeader(out, resp);
+
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
     }
 
     private boolean routeExists(String route) {
