@@ -10,6 +10,7 @@ public class HttpServer {
         try {
             ServerSocket socket = new ServerSocket(1024);
 
+            // Handle each client socket connection in new Thread
             while(true) {
                 Socket client = socket.accept();
                 if (client != null) {
@@ -23,6 +24,10 @@ public class HttpServer {
         }
     }
 
+    /**
+     * Entry point for HTTP Server
+     * @param args None
+     */
     public static void main(String[] args) {
         HttpServer webServer = new HttpServer();
         webServer.run();
