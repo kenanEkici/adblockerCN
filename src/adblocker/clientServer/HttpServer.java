@@ -1,4 +1,4 @@
-package adblocker;
+package adblocker.clientServer;
 
 import java.io.IOException;
 import java.net.ServerSocket;

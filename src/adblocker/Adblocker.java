@@ -4,7 +4,7 @@ public class Adblocker {
 
     private String[] blackList;
 
-    protected Adblocker(String[] blackList) {
+    public Adblocker(String[] blackList) {
         this.blackList = blackList;
     }
 
@@ -13,7 +13,7 @@ public class Adblocker {
      * @param body : String to be cleansed
      * @return : Cleansed String
      */
-    protected String snipAds(String body) {
+     public String snipAds(String body) {
         for (String keyword: blackList) {
             int index = body.indexOf(keyword);
             if (index != -1) {
@@ -22,4 +22,6 @@ public class Adblocker {
         }
         return body;
     }
+
+
 }

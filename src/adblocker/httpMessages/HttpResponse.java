@@ -1,4 +1,5 @@
-package adblocker;
+package adblocker.httpMessages;
+
 
 public class HttpResponse extends HttpMessage {
 

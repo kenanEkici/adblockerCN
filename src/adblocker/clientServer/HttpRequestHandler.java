@@ -1,4 +1,7 @@
-package adblocker;
+package adblocker.clientServer;
+
+import adblocker.httpMessages.HttpRequest;
+import adblocker.httpMessages.HttpResponse;
 
 import java.io.*;
 import java.net.Socket;
@@ -9,8 +12,6 @@ import java.nio.file.StandardOpenOption;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -19,7 +20,7 @@ public class HttpRequestHandler implements Runnable {
 
     private Socket client;
 
-    protected HttpRequestHandler(Socket client) {
+    HttpRequestHandler(Socket client) {
         this.client = client;
     }
 
@@ -30,27 +31,28 @@ public class HttpRequestHandler implements Runnable {
             DataInputStream in = new DataInputStream(client.getInputStream());
             out = new DataOutputStream(client.getOutputStream());
 
-            //---- READING CLIENT REQUEST HEADER
-            HttpRequest request = new HttpRequest();
-            String line = in.readLine();
-            while (line != null && !line.equals("")) {
-                request.appendToHeader(line);
-                line = in.readLine();
-            }
+            while(true) {
 
-            // Throw 400 if header does not contain Host for HTTP == 1.1
-            if (request.getProtocolVersion().equals("HTTP/1.1") && request.getHeader().get("Host") == null) {
-                throwBadRequest(out, new HttpResponse());
-            } else {
+                //---- READING CLIENT REQUEST HEADER
+                HttpRequest request = new HttpRequest();
+                client.setKeepAlive(handleIncomingHeader(in, request));
 
-                //---- HANDLE REQUESTS BY METHOD
-                switch (request.getHttpMethod()) {
-                    case "GET": handleGET(out, request, false); break;
-                    case "HEAD": handleGET(out, request, true); break;
-                    case "POST": handlePUTPOST(out, in, request, false); break;
-                    case "PUT": handlePUTPOST(out, in, request, true); break;
-                    default:
-                        throwMethodNotImplementedResponse(out, new HttpResponse());
+                // Throw 400 if header does not contain Host for HTTP == 1.1
+                if (request.getProtocolVersion().equals("HTTP/1.1") && request.getHeader().get("Host") == null) {
+                    throwBadRequest(out, new HttpResponse());
+                } else {
+
+                    switch (request.getHttpMethod()) {
+                        case "GET": handleGET(out, request, false); break;
+                        case "HEAD": handleGET(out, request, true); break;
+                        case "POST": handlePUTPOST(out, in, request, false); break;
+                        case "PUT": handlePUTPOST(out, in, request, true); break;
+                        default:
+                            throwMethodNotImplementedResponse(out, new HttpResponse());
+                    }
+                }
+                if (!client.getKeepAlive()) {
+                    break;
                 }
             }
 
@@ -62,6 +64,24 @@ public class HttpRequestHandler implements Runnable {
             throwServerErrorRequest(out, new HttpResponse());
             System.out.println(ex.getMessage());
         }
+    }
+
+    private boolean handleIncomingHeader(DataInputStream in, HttpRequest request) throws IOException {
+        char c = (char)in.readByte();
+        String line = "" + c;
+
+        while (true) {
+            while (!line.endsWith("\r\n") ) {
+                c = (char)in.readByte();
+                line += c;
+            }
+            if (line.equals("\r\n"))
+                break;
+            String newLine = line.substring(0,line.indexOf("\r\n"));
+            request.appendToHeader(newLine);
+            line = "";
+        }
+        return request.getHeader().get("Connection").equals("Keep Alive");
     }
 
     /**
@@ -77,9 +97,8 @@ public class HttpRequestHandler implements Runnable {
 
         out.writeBytes(resp.getProtocolVersion()+ " " + resp.getResponseCode() + " " + resp.getResponseMessage()+ "\r\n");
         out.writeBytes("Date: " + dateFormat.format(date) + "\r\n");
-        if (resp.getContentType()!= null) out.writeBytes("Content-Type: " + resp.getContentType() + "\r\n");
-        if (!resp.getTransferEncoding().equals("none")) out.writeBytes("Transfer-Encoding: " + resp.getTransferEncoding() + "\r\n");
-        else out.writeBytes("Content-Length: " + resp.getContentLength() + "\r\n");
+        out.writeBytes("Content-Type: " + resp.getContentType() + "\r\n");
+        out.writeBytes("Content-Length: " + resp.getContentLength() + "\r\n");
 
         //END OF HEADER
         out.writeBytes("\r\n");
@@ -91,7 +110,7 @@ public class HttpRequestHandler implements Runnable {
      * @param out : Stream to write bytes to
      * @param request : Request to process
      * @param isHead : Determines whether the request is a HEAD request
-     * @throws IOException throws IO Exception
+     * @throws IOException throws io Exception
      */
     private void handleGET(DataOutputStream out, HttpRequest request, boolean isHead) throws IOException {
         HttpResponse response = new HttpResponse();
@@ -119,7 +138,7 @@ public class HttpRequestHandler implements Runnable {
 
                 if (!isHead) {
                     //---- WRITE RESPONSE BODY TO CLIENT
-                    out.writeBytes(response.getBody() + "\r\n");
+                    out.writeBytes(response.getBody());
                     out.flush();
                 }
             }
@@ -147,7 +166,7 @@ public class HttpRequestHandler implements Runnable {
 
                 if (!isHead) {
                     //---- WRITE RESPONSE BODY TO CLIENT
-                    writeFileInChunksToStream(file, out);
+                    writeFileToStream(file, out);
                     out.flush();
                 }
             }
@@ -161,16 +180,16 @@ public class HttpRequestHandler implements Runnable {
      * Handles a client POST or PUT request.
      * @param out : Stream to write bytes to
      * @param request : Request to process
-     * @throws IOException throws IO Exception
+     * @throws IOException throws io Exception
      */
     private void handlePUTPOST(DataOutputStream out, DataInputStream in, HttpRequest request, boolean isPutRequest) throws IOException {
         Map<String, String> header = request.getHeader();
         HttpResponse response = new HttpResponse();
         if (header.get("Content-Type").contains("text/plain")) {
             String body = "";
-            String line = "";
             String length = header.get("Content-Length");
-            // if content length is available, read byte per byte
+
+            // read byte per byte
             if (length != null) {
                 int len = Integer.parseInt(length);
                 char c;
@@ -182,18 +201,12 @@ public class HttpRequestHandler implements Runnable {
                 }
                 System.out.println(body);
             }
-            //otherwise we rely on chunked transfer encoding
-            else {
-                while ((line = in.readLine()) != null) {
-                    body += line;
-                    System.out.println(line);
-                }
-            }
             writeToFile("clientInputs/amazingFile.txt", body, !isPutRequest);
+            response.setResponseCode(200);
             response.setContentType("text/html");
             response.setResponseMessage("OK");
-            response.setResponseCode(200);
             response.setContentLength(0);
+
             handleOutGoingHeader(out, response);
         }
     }
@@ -202,7 +215,7 @@ public class HttpRequestHandler implements Runnable {
      * Assembles header data for 400 BAD REQUEST
      * @param out : Stream to write bytes to
      * @param resp : Response to wrap data around
-     * @throws IOException throws IO Exception
+     * @throws IOException throws io Exception
      */
     private void throwBadRequest(DataOutputStream out, HttpResponse resp) throws IOException {
         resp.setResponseCode(400);
@@ -216,7 +229,7 @@ public class HttpRequestHandler implements Runnable {
      * Assembles header data for 404 NOT FOUND
      * @param out : Stream to write bytes to
      * @param resp : Response to wrap data around
-     * @throws IOException throws IO Exception
+     * @throws IOException throws io Exception
      */
     private void throwNotFoundRequest(DataOutputStream out, HttpResponse resp) throws IOException {
         resp.setResponseMessage("Not found");
@@ -230,7 +243,7 @@ public class HttpRequestHandler implements Runnable {
      * Assembles header data for 304 NOT MODIFIED
      * @param out : Stream to write bytes to
      * @param resp : Response to wrap data around
-     * @throws IOException throws IO Exception
+     * @throws IOException throws io Exception
      */
     private void throwNotModifiedRequest(DataOutputStream out, HttpResponse resp) throws IOException {
         resp.setResponseMessage("Not Modified");
@@ -296,9 +309,9 @@ public class HttpRequestHandler implements Runnable {
      * Method to read bytes from given file and write to outgoing stream
      * @param file : file to be read from
      * @param byteOut : stream to write to
-     * @throws IOException throws IO Exception
+     * @throws IOException throws io Exception
      */
-    private void writeFileInChunksToStream(File file, DataOutputStream byteOut) throws IOException {
+    private void writeFileToStream(File file, DataOutputStream byteOut) throws IOException {
 
         // READING FROM FILE STREAM / WRITING TO DATA OUTPUT STREAM
         FileInputStream fileStream =  new FileInputStream(file);

@@ -1,4 +1,4 @@
-package adblocker;
+package adblocker.httpMessages;
 
 import java.util.HashMap;
 import java.util.Map;
