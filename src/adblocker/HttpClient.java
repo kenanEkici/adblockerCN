@@ -4,7 +4,11 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Scanner;
 
 class HttpClient {
 
@@ -18,6 +22,20 @@ class HttpClient {
             // send request
             out.println(httpCommand + " " + route + " " + "HTTP/1.1");
             out.println("Host: " + host + ":" + Integer.toString(portNumber));
+            if(httpCommand.equals("PUT") || httpCommand.equals("POST")){
+                System.out.println("Wat wil je doorsturen?");
+                Scanner scanner = new Scanner(System.in);
+                String content = scanner.nextLine();
+                scanner.close();
+                DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+                Date date = new Date();
+                out.println("Date: " + dateFormat.format(date));
+                out.println("Content-Type: text/plain");
+                out.println("Content-Length: " + content.getBytes().length);
+                out.println();
+                out.println(content);
+            }
+
             out.println("Connection: Close");
             out.println();
 

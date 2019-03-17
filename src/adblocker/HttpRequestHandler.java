@@ -2,12 +2,17 @@ package adblocker;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class HttpRequestHandler implements Runnable {
@@ -23,7 +28,9 @@ public class HttpRequestHandler implements Runnable {
         PrintWriter out = null;
         try {
             // our request stream
-            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+
+            DataInputStream in = new DataInputStream(client.getInputStream());
+            //BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
             // our response streams
             out = new PrintWriter(client.getOutputStream());
             BufferedOutputStream byteOut= new BufferedOutputStream(client.getOutputStream());
@@ -46,9 +53,10 @@ public class HttpRequestHandler implements Runnable {
                 switch (request.getHttpMethod()) {
                     case "GET": handleGET(out, byteOut, request, false); break;
                     case "HEAD": handleGET(out, byteOut, request, true); break;
-                    case "POST": handlePOST(out, request); break;
-                    case "PUT": handlePUT(out, request); break;
-                    default: //TODO
+                    case "POST": handlePUTPOST(out, in, request, false); break;
+                    case "PUT": handlePUTPOST(out, in, request, true); break;
+                    default:
+                        throwMethodNotImplementedResponse(out, new HttpResponse());
                 }
             }
 
@@ -115,7 +123,6 @@ public class HttpRequestHandler implements Runnable {
                         return;
                     }
                 }
-
                 response.setContentType("image/jpg");
                 response.setResponseMessage("OK");
                 response.setResponseCode(200);
@@ -136,11 +143,42 @@ public class HttpRequestHandler implements Runnable {
         }
     }
 
-    private void handlePOST(PrintWriter out, HttpRequest request) {
-        //TODO
+    private void handlePUTPOST(PrintWriter out, DataInputStream in, HttpRequest request, boolean isPutRequest) throws IOException {
+        Map<String, String> header = request.getHeader();
+        HttpResponse response = new HttpResponse();
+        if (header.get("Content-Type").contains("text/plain")) {
+            String body = "";
+            String line = "";
+            String length = header.get("Content-Length");
+            // if content length is available, read byte per byte
+            if (length != null) {
+                int len = Integer.parseInt(length);
+                char c;
+
+                while (len > 0) {
+                    c = ((char) in.readByte());
+                    body += c;
+                    len--;
+                }
+                System.out.println(body);
+            }
+            //otherwise we rely on chunked transfer encoding
+            else {
+                while ((line = in.readLine()) != null) {
+                    body += line;
+                    System.out.println(line);
+                }
+            }
+            writeToFile("clientInputs/amazingFile.txt", body, !isPutRequest);
+            response.setContentType("text/html");
+            response.setResponseMessage("OK");
+            response.setResponseCode(200);
+            response.setContentLength(0);
+            handleOutGoingHeader(out, response);
+        }
     }
 
-    private void handlePUT(PrintWriter out, HttpRequest request) {
+    private void handlePUT(PrintWriter out, DataInputStream in, HttpRequest request) {
         //TODO
     }
 
@@ -181,6 +219,19 @@ public class HttpRequestHandler implements Runnable {
         }
     }
 
+    private void throwMethodNotImplementedResponse(PrintWriter out, HttpResponse resp) {
+        try {
+            resp.setResponseMessage("Not Implemented!");
+            resp.setResponseCode(501);
+            resp.setContentType("text/plain");
+
+            handleOutGoingHeader(out, resp);
+
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
+    }
+
     private boolean routeExists(String route) {
         File directory = new File("webpage");
         File[] listOfFiles = directory.listFiles();
@@ -210,5 +261,27 @@ public class HttpRequestHandler implements Runnable {
         }
 
         fileStream.close();
+    }
+
+    private void writeToFile(String path, String content, boolean append) {
+        try {
+            OpenOption[] openOptions;
+            if(append){
+                openOptions = new OpenOption[]{
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.APPEND };
+            }
+            else{
+
+                openOptions = new OpenOption[]{
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.TRUNCATE_EXISTING };
+            }
+            Files.write(Paths.get(path), content.getBytes(), openOptions);
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
     }
 }
