@@ -14,7 +14,13 @@ import java.util.Scanner;
 
 public class HttpClient {
 
-
+    /**
+     * Method to send HEAD and GET requests to a given socket.
+     * @param host : hostname of recipient socket
+     * @param route : route to execute method on
+     * @param portNumber : port number to connect with host
+     * @param httpCommand : (HEAD, GET)
+     */
     private void sendHeadOrGetRequest(String host, String route, int portNumber, String httpCommand) throws IOException {
         Socket socket = new Socket(host, portNumber);
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
@@ -124,6 +130,13 @@ public class HttpClient {
         socket.close();
     }
 
+    /**
+     * Method to send Put and Post requests to a given socket.
+     * @param host : hostname of recipient socket
+     * @param route : route to execute method on
+     * @param portNumber : port number to connect with host
+     * @param httpCommand : (POST, PUT)
+     */
     private void sendPutOrPostRequest(String host, String route, int portNumber, String httpCommand) throws IOException {
         Socket socket = new Socket(host, portNumber);
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
