@@ -45,8 +45,8 @@ public class HttpRequestHandler implements Runnable {
 
                 //---- HANDLE REQUESTS BY METHOD
                 switch (request.getHttpMethod()) {
-                    case "GET": handleGET(out, byteOut, request, false); break;
-                    case "HEAD": handleGET(out, byteOut, request, true); break;
+                    case "GET": handleGET(out, request, false); break;
+                    case "HEAD": handleGET(out, request, true); break;
                     case "POST": handlePUTPOST(out, in, request, false); break;
                     case "PUT": handlePUTPOST(out, in, request, true); break;
                     default:
@@ -163,7 +163,7 @@ public class HttpRequestHandler implements Runnable {
      * @param request : Request to process
      * @throws IOException throws IO Exception
      */
-    private void handlePUTPOST(PrintWriter out, DataInputStream in, HttpRequest request, boolean isPutRequest) throws IOException {
+    private void handlePUTPOST(DataOutputStream out, DataInputStream in, HttpRequest request, boolean isPutRequest) throws IOException {
         Map<String, String> header = request.getHeader();
         HttpResponse response = new HttpResponse();
         if (header.get("Content-Type").contains("text/plain")) {

@@ -1,5 +1,7 @@
 package adblocker;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -12,6 +14,182 @@ import java.util.Scanner;
 
 public class HttpClient {
 
+
+    private void sendHeadOrGetRequest(String host, String route, int portNumber, String httpCommand) throws IOException {
+        Socket socket = new Socket(host, portNumber);
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+        DataInputStream in = new DataInputStream(socket.getInputStream());
+
+        //----SENDING REQUEST
+
+        out.println(httpCommand + " " + route + " " + "HTTP/1.1");
+        out.println("Host: " + host + ":" + Integer.toString(portNumber));
+        out.println("Connection: Close");
+        out.println();
+
+        //----END OF SENDING REQUEST
+
+        HttpResponse resp = new HttpResponse();
+
+        //----READING RESPONSE HEADER
+
+        char c = (char)in.readByte();
+        String line = "" + c;
+
+        while (true) {
+            while (!line.endsWith("\r\n") ) {
+                c = (char)in.readByte();
+                line += c;
+            }
+            if (line.equals("\r\n"))
+                break;
+            String newLine = line.substring(0,line.indexOf("\r\n"));
+            resp.appendToHeader(newLine);
+            System.out.println(newLine);
+            line = "";
+        }
+
+        //----END OF READING RESPONSE HEADER
+
+
+        String contentType = resp.getHeader().get("Content-Type");
+        String length = resp.getHeader().get("Content-Length");
+        String encoding = resp.getHeader().get("Transfer-Encoding");
+
+        //----READING RESPONSE BODY
+        if (resp.getResponseCode() < 400) {
+            // HTML RESPONSE
+            if (contentType.contains("text/html")) {
+                String body = "";
+
+                // BY CONTENT LENGTH
+                if (encoding == null) {
+                    int len = Integer.parseInt(length);
+                    char c2;
+
+                    while (len > 0) {
+                        c2 = ((char) in.readByte());
+                        body += c2;
+                        len--;
+                    }
+                    System.out.println(body);
+                }
+                // CHUNKED
+                else {
+                    body = "" + (char)in.readByte();
+                    while (!body.endsWith("\r\n") ) {
+                        c = (char)in.readByte();
+                        body += c;
+                    }
+                    System.out.println(body);
+                }
+
+                // RELEASE ADBLOCK ON BODY
+                Adblocker blocker = new Adblocker(new String[]{"ad1.jpg", "ad2.jpg", "ad3.jpg"});
+                String newBody = blocker.snipAds(body);
+                resp.setBody(newBody);
+
+                // WRITE NO AD RESULT TO HTML
+                writeToHtml(newBody);
+
+                // DOWNLOAD UNDERLYING IMAGES RECURSIVELY
+                for (String cleanUri : findImageSourceList(newBody)) {
+                    if (!cleanUri.equals("../adblocker/placeholder.png"))
+                        sendRequest(host, route + cleanUri, portNumber, "GET");
+                }
+            }
+            // IMAGE RESPONSE
+            else {
+                // CHUNKED
+                if (encoding != null) {
+                    if (encoding.equals("chunked")) {
+                        System.out.println("A file is being written by chunks");
+                        writeToFile(in, route, 0, true);
+                    }
+                }
+                // BY CONTENT LENGTH
+                else {
+                    System.out.println("A file is being written by content length");
+                    writeToFile(in, route, Integer.parseInt(length), false);
+                }
+            }
+        }
+
+        //----END OF READING RESPONSE BODY
+
+        System.out.println();
+
+        out.close();
+        in.close();
+        socket.close();
+    }
+
+    private void sendPutOrPostRequest(String host, String route, int portNumber, String httpCommand) throws IOException {
+        Socket socket = new Socket(host, portNumber);
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+        DataInputStream in = new DataInputStream(socket.getInputStream());
+
+        //----SENDING REQUEST
+
+        out.println(httpCommand + " " + route + " " + "HTTP/1.1");
+        out.println("Host: " + host + ":" + Integer.toString(portNumber));
+        System.out.println("Wat wil je doorsturen?");
+        Scanner scanner = new Scanner(System.in);
+        String content = scanner.nextLine();
+        scanner.close();
+        DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        Date date = new Date();
+        out.println("Date: " + dateFormat.format(date));
+        out.println("Content-Type: text/plain");
+        out.println("Content-Length: " + content.getBytes().length);
+        out.println();
+        out.println(content);
+
+
+        out.println("Connection: Close");
+        out.println();
+
+        //----END OF SENDING REQUEST
+
+        HttpResponse resp = new HttpResponse();
+
+        //----READING RESPONSE HEADER
+
+        char c = (char)in.readByte();
+        String line = "" + c;
+
+        while (true) {
+            while (!line.endsWith("\r\n") ) {
+                c = (char)in.readByte();
+                line += c;
+            }
+            if (line.equals("\r\n"))
+                break;
+            String newLine = line.substring(0,line.indexOf("\r\n"));
+            resp.appendToHeader(newLine);
+            System.out.println(newLine);
+            line = "";
+        }
+
+        //----END OF READING RESPONSE HEADER
+
+        System.out.println();
+
+        String contentType = resp.getHeader().get("Content-Type");
+        String length = resp.getHeader().get("Content-Length");
+        String encoding = resp.getHeader().get("Transfer-Encoding");
+        if(resp.getResponseCode() == 200){
+            System.out.println(httpCommand + "-Command successfully executed!");
+        }
+        else{
+            System.out.println("Error: " + resp.getResponseCode() + ": " + resp.getResponseMessage());
+        }
+
+        out.close();
+        in.close();
+        socket.close();
+    }
+
     /**
      * Method to send requests to a given socket.
      * @param host : hostname of recipient socket
@@ -20,131 +198,19 @@ public class HttpClient {
      * @param httpCommand : (HEAD, GET, POST, PUT)
      */
     protected void sendRequest(String host, String route, int portNumber, String httpCommand) {
-
         try {
-
-            Socket socket = new Socket(host, portNumber);
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            DataInputStream in = new DataInputStream(socket.getInputStream());
-
-            //----SENDING REQUEST
-
-            out.println(httpCommand + " " + route + " " + "HTTP/1.1");
-            out.println("Host: " + host + ":" + Integer.toString(portNumber));
-            if(httpCommand.equals("PUT") || httpCommand.equals("POST")){
-                System.out.println("Wat wil je doorsturen?");
-                Scanner scanner = new Scanner(System.in);
-                String content = scanner.nextLine();
-                scanner.close();
-                DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-                Date date = new Date();
-                out.println("Date: " + dateFormat.format(date));
-                out.println("Content-Type: text/plain");
-                out.println("Content-Length: " + content.getBytes().length);
-                out.println();
-                out.println(content);
-            }
-
-            out.println("Connection: Close");
-            out.println();
-
-            //----END OF SENDING REQUEST
-
-            HttpResponse resp = new HttpResponse();
-
-            //----READING RESPONSE HEADER
-
-            char c = (char)in.readByte();
-            String line = "" + c;
-
-            while (true) {
-                while (!line.endsWith("\r\n") ) {
-                    c = (char)in.readByte();
-                    line += c;
-                }
-                if (line.equals("\r\n"))
+            switch(httpCommand){
+                case "GET":
+                case "HEAD":
+                    sendHeadOrGetRequest(host, route, portNumber, httpCommand);
                     break;
-                String newLine = line.substring(0,line.indexOf("\r\n"));
-                resp.appendToHeader(newLine);
-                System.out.println(newLine);
-                line = "";
+                case "PUT":
+                case "POST":
+                    sendPutOrPostRequest(host, route, portNumber, httpCommand);
+                    break;
+                default:
+                    throw new NotImplementedException();
             }
-
-            //----END OF READING RESPONSE HEADER
-
-            System.out.println();
-
-            String contentType = resp.getHeader().get("Content-Type");
-            String length = resp.getHeader().get("Content-Length");
-            String encoding = resp.getHeader().get("Transfer-Encoding");
-
-            //----READING RESPONSE BODY
-            if (resp.getResponseCode() < 400) {
-                // HTML RESPONSE
-                if (contentType.contains("text/html")) {
-                    String body = "";
-
-                    // BY CONTENT LENGTH
-                    if (encoding == null) {
-                        int len = Integer.parseInt(length);
-                        char c2;
-
-                        while (len > 0) {
-                            c2 = ((char) in.readByte());
-                            body += c2;
-                            len--;
-                        }
-                        System.out.println(body);
-                    }
-                    // CHUNKED
-                    else {
-                        body = "" + (char)in.readByte();
-                        while (!body.endsWith("\r\n") ) {
-                            c = (char)in.readByte();
-                            body += c;
-                        }
-                        System.out.println(body);
-                    }
-
-                    // RELEASE ADBLOCK ON BODY
-                    Adblocker blocker = new Adblocker(new String[]{"ad1.jpg", "ad2.jpg", "ad3.jpg"});
-                    String newBody = blocker.snipAds(body);
-                    resp.setBody(newBody);
-
-                    // WRITE NO AD RESULT TO HTML
-                    writeToHtml(newBody);
-
-                    // DOWNLOAD UNDERLYING IMAGES RECURSIVELY
-                    for (String cleanUri : findImageSourceList(newBody)) {
-                        if (!cleanUri.equals("../adblocker/placeholder.png"))
-                            sendRequest(host, route + cleanUri, portNumber, "GET");
-                    }
-                }
-                // IMAGE RESPONSE
-                else {
-                    // CHUNKED
-                    if (encoding != null) {
-                        if (encoding.equals("chunked")) {
-                            System.out.println("A file is being written by chunks");
-                            writeToFile(in, route, 0, true);
-                        }
-                    }
-                    // BY CONTENT LENGTH
-                    else {
-                        System.out.println("A file is being written by content length");
-                        writeToFile(in, route, Integer.parseInt(length), false);
-                    }
-                }
-            }
-
-            //----END OF READING RESPONSE BODY
-
-            System.out.println();
-
-            out.close();
-            in.close();
-            socket.close();
-
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
