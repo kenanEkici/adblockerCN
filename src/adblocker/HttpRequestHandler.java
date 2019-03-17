@@ -19,24 +19,18 @@ public class HttpRequestHandler implements Runnable {
 
     private Socket client;
 
-    public HttpRequestHandler(Socket client) {
+    protected HttpRequestHandler(Socket client) {
         this.client = client;
     }
 
     @Override
     public void run() {
-        PrintWriter out = null;
+        DataOutputStream out = null;
         try {
-            // our request stream
-
             DataInputStream in = new DataInputStream(client.getInputStream());
-            //BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            // our response streams
-            out = new PrintWriter(client.getOutputStream());
-            BufferedOutputStream byteOut= new BufferedOutputStream(client.getOutputStream());
+            out = new DataOutputStream(client.getOutputStream());
 
-            // read our header
-            // for example, GET / HTTP/1.1
+            //---- READING CLIENT REQUEST HEADER
             HttpRequest request = new HttpRequest();
             String line = in.readLine();
             while (line != null && !line.equals("")) {
@@ -44,12 +38,12 @@ public class HttpRequestHandler implements Runnable {
                 line = in.readLine();
             }
 
-            //throws 400 if header does not contain Host for 1.1
+            // Throw 400 if header does not contain Host for HTTP == 1.1
             if (request.getProtocolVersion().equals("HTTP/1.1") && request.getHeader().get("Host") == null) {
-                HttpResponse resp = new HttpResponse();
-                throwBadRequest(out, resp);
+                throwBadRequest(out, new HttpResponse());
             } else {
-                //otherwise we handle our request by method
+
+                //---- HANDLE REQUESTS BY METHOD
                 switch (request.getHttpMethod()) {
                     case "GET": handleGET(out, byteOut, request, false); break;
                     case "HEAD": handleGET(out, byteOut, request, true); break;
@@ -61,7 +55,6 @@ public class HttpRequestHandler implements Runnable {
             }
 
             out.close();
-            byteOut.close();
             in.close();
             client.close();
 
@@ -71,32 +64,50 @@ public class HttpRequestHandler implements Runnable {
         }
     }
 
-    private void handleOutGoingHeader(PrintWriter out, HttpResponse resp) throws IOException {
+    /**
+     * Writes the header for outgoing responses
+     * @param out : Stream to write header to client
+     * @param resp : Response to read header data from
+     * @throws IOException
+     */
+    private void handleOutGoingHeader(DataOutputStream out, HttpResponse resp) throws IOException {
+        //---- WRITING RESPONSE HEADER
         DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         Date date = new Date();
 
-        //we create and send a new header for the response
-        out.println(resp.getProtocolVersion()+ " " + resp.getResponseCode() + " " + resp.getResponseMessage());
-        out.println("Date: " + dateFormat.format(date));
-        if (resp.getContentType()!= null) out.println("Content-Type: " + resp.getContentType());
-        if (!resp.getTransferEncoding().equals("none")) out.println("Transfer-Encoding: " + resp.getTransferEncoding());
-        else out.println("Content-Length: " + resp.getContentLength());
-        out.println(); //EOH
+        out.writeBytes(resp.getProtocolVersion()+ " " + resp.getResponseCode() + " " + resp.getResponseMessage()+ "\r\n");
+        out.writeBytes("Date: " + dateFormat.format(date) + "\r\n");
+        if (resp.getContentType()!= null) out.writeBytes("Content-Type: " + resp.getContentType() + "\r\n");
+        if (!resp.getTransferEncoding().equals("none")) out.writeBytes("Transfer-Encoding: " + resp.getTransferEncoding() + "\r\n");
+        else out.writeBytes("Content-Length: " + resp.getContentLength() + "\r\n");
+
+        //END OF HEADER
+        out.writeBytes("\r\n");
         out.flush();
     }
 
-    private void handleGET(PrintWriter out, BufferedOutputStream byteOut, HttpRequest request, boolean isHead) throws IOException {
+    /**
+     * Handles a client GET and HEAD request.
+     * @param out : Stream to write bytes to
+     * @param request : Request to process
+     * @param isHead : Determines whether the request is a HEAD request
+     * @throws IOException throws IO Exception
+     */
+    private void handleGET(DataOutputStream out, HttpRequest request, boolean isHead) throws IOException {
         HttpResponse response = new HttpResponse();
         String route = request.getRoute();
 
+        // If given route (route excluded) does not exist, throw 404
         if (!routeExists(route)) {
             throwNotFoundRequest(out, response);
             return;
         }
 
         try {
-            // root
-            if (request.getRoute().equals("/") || request.getRoute().endsWith(".html")) {
+            // Handle root index
+            if (request.getRoute().equals("/") || request.getRoute().equals("index.html")) {
+
+                // Write HTML file
                 BufferedReader in = new BufferedReader(new FileReader("webpage/index.html"));
                 response.setBody(in.lines().collect(Collectors.joining()));
                 response.setContentType("text/html");
@@ -107,14 +118,18 @@ public class HttpRequestHandler implements Runnable {
                 handleOutGoingHeader(out, response);
 
                 if (!isHead) {
-                    out.println(response.getBody());
+                    //---- WRITE RESPONSE BODY TO CLIENT
+                    out.writeBytes(response.getBody() + "\r\n");
                     out.flush();
                 }
-            } else {
+            }
+            // Handle files (images)
+            else {
                 File file = new File("webpage/" + request.getRoute().substring(1));
                 int length = (int) file.length();
                 String lastModified = request.getHeader().get("If-Modified-Since");
 
+                // Throw 304 if last modified header is rejected
                 if (lastModified != null) {
                     Date dateHeader = new SimpleDateFormat("EEE,dd MMM yyyy kk:mm:ss zzz").parse(lastModified);
                     Date fileMod = new Date(file.lastModified());
@@ -126,14 +141,14 @@ public class HttpRequestHandler implements Runnable {
                 response.setContentType("image/jpg");
                 response.setResponseMessage("OK");
                 response.setResponseCode(200);
-
                 response.setContentLength(length);
 
                 handleOutGoingHeader(out, response);
 
                 if (!isHead) {
-                    writeFileInChunksToStream(file, byteOut);
-                    byteOut.flush();
+                    //---- WRITE RESPONSE BODY TO CLIENT
+                    writeFileInChunksToStream(file, out);
+                    out.flush();
                 }
             }
         } catch (FileNotFoundException e) {
@@ -142,7 +157,12 @@ public class HttpRequestHandler implements Runnable {
             throwBadRequest(out, response);
         }
     }
-
+    /**
+     * Handles a client POST or PUT request.
+     * @param out : Stream to write bytes to
+     * @param request : Request to process
+     * @throws IOException throws IO Exception
+     */
     private void handlePUTPOST(PrintWriter out, DataInputStream in, HttpRequest request, boolean isPutRequest) throws IOException {
         Map<String, String> header = request.getHeader();
         HttpResponse response = new HttpResponse();
@@ -178,11 +198,13 @@ public class HttpRequestHandler implements Runnable {
         }
     }
 
-    private void handlePUT(PrintWriter out, DataInputStream in, HttpRequest request) {
-        //TODO
-    }
-
-    private void throwBadRequest(PrintWriter out, HttpResponse resp) throws IOException {
+    /**
+     * Assembles header data for 400 BAD REQUEST
+     * @param out : Stream to write bytes to
+     * @param resp : Response to wrap data around
+     * @throws IOException throws IO Exception
+     */
+    private void throwBadRequest(DataOutputStream out, HttpResponse resp) throws IOException {
         resp.setResponseCode(400);
         resp.setResponseMessage("Bad Request");
         resp.setContentType("text/plain");
@@ -190,7 +212,13 @@ public class HttpRequestHandler implements Runnable {
         handleOutGoingHeader(out, resp);
     }
 
-    private void throwNotFoundRequest(PrintWriter out, HttpResponse resp) throws IOException {
+    /**
+     * Assembles header data for 404 NOT FOUND
+     * @param out : Stream to write bytes to
+     * @param resp : Response to wrap data around
+     * @throws IOException throws IO Exception
+     */
+    private void throwNotFoundRequest(DataOutputStream out, HttpResponse resp) throws IOException {
         resp.setResponseMessage("Not found");
         resp.setResponseCode(404);
         resp.setContentType("text/plain");
@@ -198,7 +226,13 @@ public class HttpRequestHandler implements Runnable {
         handleOutGoingHeader(out, resp);
     }
 
-    private void throwNotModifiedRequest(PrintWriter out, HttpResponse resp) throws IOException {
+    /**
+     * Assembles header data for 304 NOT MODIFIED
+     * @param out : Stream to write bytes to
+     * @param resp : Response to wrap data around
+     * @throws IOException throws IO Exception
+     */
+    private void throwNotModifiedRequest(DataOutputStream out, HttpResponse resp) throws IOException {
         resp.setResponseMessage("Not Modified");
         resp.setResponseCode(304);
         resp.setContentType("text/plain");
@@ -206,7 +240,12 @@ public class HttpRequestHandler implements Runnable {
         handleOutGoingHeader(out, resp);
     }
 
-    private void throwServerErrorRequest(PrintWriter out, HttpResponse resp) {
+    /**
+     * Assembles header data for 400 BAD REQUEST
+     * @param out : Stream to write bytes to
+     * @param resp : Response to wrap data around
+     */
+    private void throwServerErrorRequest(DataOutputStream out, HttpResponse resp) {
         try {
             resp.setResponseMessage("Server Error");
             resp.setResponseCode(500);
@@ -219,7 +258,7 @@ public class HttpRequestHandler implements Runnable {
         }
     }
 
-    private void throwMethodNotImplementedResponse(PrintWriter out, HttpResponse resp) {
+    private void throwMethodNotImplementedResponse(DataOutputStream out, HttpResponse resp) {
         try {
             resp.setResponseMessage("Not Implemented!");
             resp.setResponseCode(501);
@@ -232,14 +271,19 @@ public class HttpRequestHandler implements Runnable {
         }
     }
 
+    /**
+     * Checks if certain route provided by client exists in directory structure.
+     * @param route : route to check for
+     * @return : true if route exists, false if not
+     */
     private boolean routeExists(String route) {
         File directory = new File("webpage");
         File[] listOfFiles = directory.listFiles();
 
-        //root
+        // Exclude root
         if (route.equals("/")) return true;
 
-        //other routes
+        // Check files within webpage directory
         if (listOfFiles != null)
             for(File f : listOfFiles)
                 if (f.isFile())
@@ -248,13 +292,19 @@ public class HttpRequestHandler implements Runnable {
         return false;
     }
 
-    private void writeFileInChunksToStream(File file, BufferedOutputStream byteOut) throws IOException {
+    /**
+     * Method to read bytes from given file and write to outgoing stream
+     * @param file : file to be read from
+     * @param byteOut : stream to write to
+     * @throws IOException throws IO Exception
+     */
+    private void writeFileInChunksToStream(File file, DataOutputStream byteOut) throws IOException {
 
-        //we create a stream and directly read from the file and write into the outgoing stream
+        // READING FROM FILE STREAM / WRITING TO DATA OUTPUT STREAM
         FileInputStream fileStream =  new FileInputStream(file);
 
         int count;
-        byte[] buffer = new byte[8192]; //chunk size
+        byte[] buffer = new byte[8192]; // chunk size
         while ((count = fileStream.read(buffer)) > 0)
         {
             byteOut.write(buffer, 0, count);

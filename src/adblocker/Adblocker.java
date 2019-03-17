@@ -1,16 +1,19 @@
 package adblocker;
 
-import java.util.ArrayList;
-
 public class Adblocker {
 
     private String[] blackList;
 
-    Adblocker(String[] blackList) {
+    protected Adblocker(String[] blackList) {
         this.blackList = blackList;
     }
 
-    String snipAds(String body) {
+    /**
+     * Cut ad URI from a String according to a blacklist.
+     * @param body : String to be cleansed
+     * @return : Cleansed String
+     */
+    protected String snipAds(String body) {
         for (String keyword: blackList) {
             int index = body.indexOf(keyword);
             if (index != -1) {
@@ -18,12 +21,5 @@ public class Adblocker {
             }
         }
         return body;
-    }
-
-    ArrayList<String> cleanseUris(ArrayList<String> uris) {
-        for(String keyword: blackList) {
-            uris.remove(keyword);
-        }
-        return uris;
     }
 }
