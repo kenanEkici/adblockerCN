@@ -8,10 +8,7 @@ import adblocker.io.Parser;
 
 import java.io.*;
 import java.net.Socket;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Scanner;
 
 public class HttpClient {
@@ -133,6 +130,8 @@ public class HttpClient {
                         //---- READING RESPONSE BODY
                         if (contentType.contains("image")) {
 
+                            System.out.println();
+
                             // CHUNKED
                             if (encoding != null) {
                                 if (encoding.equals("chunked")) {
@@ -231,17 +230,10 @@ public class HttpClient {
 
         out.writeBytes(httpCommand + " " + route + " " + "HTTP/1.1" + "\r\n");
         out.writeBytes("Host: " + host + ":" + Integer.toString(portNumber) + "\r\n");
-        //DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss" + "\r\n");
-       // Date date = new Date();
-//        out.writeBytes("Date: " + dateFormat.format(date) + "\r\n");
         out.writeBytes("Content-Type: text/plain" + "\r\n");
         out.writeBytes("Content-Length: " + content.getBytes().length + "\r\n");
         out.writeBytes("Connection: Close"+"\r\n");
         out.writeBytes("\r\n");
         out.writeBytes(content+"\r\n");
-        out.writeBytes("\r\n");
     }
-
-
-
 }

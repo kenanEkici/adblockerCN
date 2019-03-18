@@ -56,10 +56,6 @@ public class HttpRequestHandler implements Runnable {
                 }
             }
 
-            out.close();
-            in.close();
-            client.close();
-
         } catch (IOException ex) {
             throwServerErrorRequest(out, new HttpResponse());
             System.out.println(ex.getMessage());
