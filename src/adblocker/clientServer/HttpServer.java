@@ -6,6 +6,9 @@ import java.net.Socket;
 
 public class HttpServer {
 
+    /**
+     * Create thread and handle each client socket connection separately
+     */
     private void run() {
         try {
             ServerSocket socket = new ServerSocket(1024);

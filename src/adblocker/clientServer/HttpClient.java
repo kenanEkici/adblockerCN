@@ -73,7 +73,7 @@ public class HttpClient {
 
         //----READING RESPONSE HEADER
         HttpResponse resp = new HttpResponse();
-        parser.handleResponseHeader(in, resp);
+        handleResponseHeader(in, resp);
 
         //----READING RESPONSE BODY
 
@@ -121,7 +121,7 @@ public class HttpClient {
 
                         //---- READING RESPONSE HEADER
                         HttpResponse imageResp = new HttpResponse();
-                        parser.handleResponseHeader(in, imageResp);
+                        handleResponseHeader(in, imageResp);
 
                         contentType = imageResp.getHeader().get("Content-Type");
                         length = imageResp.getHeader().get("Content-Length");
@@ -136,14 +136,14 @@ public class HttpClient {
                             if (encoding != null) {
                                 if (encoding.equals("chunked")) {
                                     System.out.println("A file is being written by chunks");
-                                    bWriter.writeToFile(in, route + cleanUri, 0, true);
+                                    bWriter.writeToFileByChunks(in, route + cleanUri);
                                 }
                             }
 
                             // BY CONTENT LENGTH
                             else {
                                 System.out.println("A file is being written by content length");
-                                bWriter.writeToFile(in, route + cleanUri, Integer.parseInt(length), false);
+                                bWriter.writeToFileByLength(in, route + cleanUri, Integer.parseInt(length));
                             }
                         }
                     }
@@ -168,14 +168,13 @@ public class HttpClient {
         Socket socket = new Socket(host, portNumber);
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
         DataInputStream in = new DataInputStream(socket.getInputStream());
-        Parser parser = new Parser();
 
         //----SENDING REQUEST
         handleHeaderPutOrPost(out, host, route, portNumber, httpCommand);
 
         //----READING RESPONSE HEADER
         HttpResponse resp = new HttpResponse();
-        parser.handleResponseHeader(in, resp);
+        handleResponseHeader(in, resp);
 
         System.out.println();
 
@@ -223,7 +222,7 @@ public class HttpClient {
      * @throws IOException IOException
      */
     private void handleHeaderPutOrPost(DataOutputStream out, String host, String route, int portNumber, String httpCommand) throws IOException {
-        System.out.println("Wat wil je doorsturen?");
+        System.out.println("Please input your message to the server");
         Scanner scanner = new Scanner(System.in);
         String content = scanner.nextLine();
         scanner.close();
@@ -235,5 +234,29 @@ public class HttpClient {
         out.writeBytes("Connection: Close"+"\r\n");
         out.writeBytes("\r\n");
         out.writeBytes(content+"\r\n");
+    }
+
+    /**
+     * Reads the headers from the server response and wraps them in HttpResponse
+     * @param in : Stream to read header bytes from
+     * @param resp : Response to which to encapsulate data into
+     * @throws IOException : IOException
+     */
+    public void handleResponseHeader(DataInputStream in, HttpResponse resp) throws IOException {
+        char c = (char) in.readByte();
+        String line = "" + c;
+
+        while (true) {
+            while (!line.endsWith("\r\n")) {
+                c = (char) in.readByte();
+                line += c;
+            }
+            if (line.equals("\r\n"))
+                break;
+            String newLine = line.substring(0, line.indexOf("\r\n"));
+            resp.appendToHeader(newLine);
+            System.out.println(newLine);
+            line = "";
+        }
     }
 }

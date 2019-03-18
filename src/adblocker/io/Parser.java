@@ -26,29 +26,4 @@ public class Parser {
 
         return uris;
     }
-
-
-    /**
-     * Reads the headers from the server response and wraps them in HttpResponse
-     * @param in : Stream to read header bytes from
-     * @param resp : Response to which to encapsulate data into
-     * @throws IOException : IOException
-     */
-    public void handleResponseHeader(DataInputStream in, HttpResponse resp) throws IOException {
-        char c = (char) in.readByte();
-        String line = "" + c;
-
-        while (true) {
-            while (!line.endsWith("\r\n")) {
-                c = (char) in.readByte();
-                line += c;
-            }
-            if (line.equals("\r\n"))
-                break;
-            String newLine = line.substring(0, line.indexOf("\r\n"));
-            resp.appendToHeader(newLine);
-            System.out.println(newLine);
-            line = "";
-        }
-    }
 }

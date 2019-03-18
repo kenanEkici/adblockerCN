@@ -2,6 +2,8 @@ package adblocker.clientServer;
 
 import adblocker.httpMessages.HttpRequest;
 import adblocker.httpMessages.HttpResponse;
+import adblocker.io.ByteReader;
+import adblocker.io.ByteWriter;
 
 import java.io.*;
 import java.net.Socket;
@@ -51,6 +53,7 @@ public class HttpRequestHandler implements Runnable {
                             throwMethodNotImplementedResponse(out, new HttpResponse());
                     }
                 }
+                // IF KEEP ALIVE IS SET, CONTINUE
                 if (!client.getKeepAlive()) {
                     break;
                 }
@@ -62,6 +65,13 @@ public class HttpRequestHandler implements Runnable {
         }
     }
 
+    /**
+     * Reads the header of incoming requests
+     * @param in : Stream to read from
+     * @param request : Reques to wrap data into
+     * @return : whether the Keep Alive flag is set or not
+     * @throws IOException throws IOException
+     */
     private boolean handleIncomingHeader(DataInputStream in, HttpRequest request) throws IOException {
         char c = (char)in.readByte();
         String line = "" + c;
@@ -84,7 +94,7 @@ public class HttpRequestHandler implements Runnable {
      * Writes the header for outgoing responses
      * @param out : Stream to write header to client
      * @param resp : Response to read header data from
-     * @throws IOException
+     * @throws IOException throws IOException
      */
     private void handleOutGoingHeader(DataOutputStream out, HttpResponse resp) throws IOException {
         //---- WRITING RESPONSE HEADER
@@ -162,7 +172,8 @@ public class HttpRequestHandler implements Runnable {
 
                 if (!isHead) {
                     //---- WRITE RESPONSE BODY TO CLIENT
-                    writeFileToStream(file, out);
+                    ByteWriter writer = new ByteWriter();
+                    writer.writeFileToStream(file, out);
                     out.flush();
                 }
             }
@@ -172,6 +183,7 @@ public class HttpRequestHandler implements Runnable {
             throwBadRequest(out, response);
         }
     }
+
     /**
      * Handles a client POST or PUT request.
      * @param out : Stream to write bytes to
@@ -181,23 +193,20 @@ public class HttpRequestHandler implements Runnable {
     private void handlePUTPOST(DataOutputStream out, DataInputStream in, HttpRequest request, boolean isPutRequest) throws IOException {
         Map<String, String> header = request.getHeader();
         HttpResponse response = new HttpResponse();
+        ByteReader reader = new ByteReader();
+
         if (header.get("Content-Type").contains("text/plain")) {
             String body = "";
             String length = header.get("Content-Length");
 
             // read byte per byte
             if (length != null) {
-                int len = Integer.parseInt(length);
-                char c;
-
-                while (len > 0) {
-                    c = ((char) in.readByte());
-                    body += c;
-                    len--;
-                }
+                body = reader.readBodyByLength(in, length);
                 System.out.println(body);
             }
-            writeToFile("clientInputs/amazingFile.txt", body, !isPutRequest);
+
+            ByteWriter writer = new ByteWriter();
+            writer.writeToFile("clientInputs/amazingFile.txt", body, !isPutRequest);
             response.setResponseCode(200);
             response.setContentType("text/html");
             response.setResponseMessage("OK");
@@ -267,6 +276,11 @@ public class HttpRequestHandler implements Runnable {
         }
     }
 
+    /**
+     * Assembles header data for 501 NOT IMPLEMENTED
+     * @param out : Stream to write bytes to
+     * @param resp : Response to wrap data around
+     */
     private void throwMethodNotImplementedResponse(DataOutputStream out, HttpResponse resp) {
         try {
             resp.setResponseMessage("Not Implemented!");
@@ -299,48 +313,5 @@ public class HttpRequestHandler implements Runnable {
                     if (f.getName().equals(route.substring(1)))
                         return true;
         return false;
-    }
-
-    /**
-     * Method to read bytes from given file and write to outgoing stream
-     * @param file : file to be read from
-     * @param byteOut : stream to write to
-     * @throws IOException throws io Exception
-     */
-    private void writeFileToStream(File file, DataOutputStream byteOut) throws IOException {
-
-        // READING FROM FILE STREAM / WRITING TO DATA OUTPUT STREAM
-        FileInputStream fileStream =  new FileInputStream(file);
-
-        int count;
-        byte[] buffer = new byte[8192]; // chunk size
-        while ((count = fileStream.read(buffer)) > 0)
-        {
-            byteOut.write(buffer, 0, count);
-        }
-
-        fileStream.close();
-    }
-
-    private void writeToFile(String path, String content, boolean append) {
-        try {
-            OpenOption[] openOptions;
-            if(append){
-                openOptions = new OpenOption[]{
-                        StandardOpenOption.WRITE,
-                        StandardOpenOption.CREATE,
-                        StandardOpenOption.APPEND };
-            }
-            else{
-
-                openOptions = new OpenOption[]{
-                        StandardOpenOption.WRITE,
-                        StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING };
-            }
-            Files.write(Paths.get(path), content.getBytes(), openOptions);
-        } catch (IOException ex) {
-            System.out.println(ex.getMessage());
-        }
     }
 }
