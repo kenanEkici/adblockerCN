@@ -20,18 +20,20 @@ import java.util.stream.Collectors;
 
 public class HttpRequestHandler implements Runnable {
 
-    private Socket client;
+    private final Socket client;
+    private final DataInputStream in;
+    private final DataOutputStream out;
+    private boolean dispose = true;
 
-    HttpRequestHandler(Socket client) {
+    HttpRequestHandler(Socket client, DataInputStream in, DataOutputStream out) {
         this.client = client;
+        this.in = in;
+        this.out = out;
     }
 
     @Override
     public void run() {
-        DataOutputStream out = null;
         try {
-            DataInputStream in = new DataInputStream(client.getInputStream());
-            out = new DataOutputStream(client.getOutputStream());
 
             while(true) {
 
@@ -47,8 +49,8 @@ public class HttpRequestHandler implements Runnable {
                     switch (request.getHttpMethod()) {
                         case "GET": handleGET(out, request, false); break;
                         case "HEAD": handleGET(out, request, true); break;
-                        case "POST": handlePUTPOST(out, in, request, false); break;
-                        case "PUT": handlePUTPOST(out, in, request, true); break;
+                        case "POST": handlePUTPOST(out, in, request, false); dispose=false; break;
+                        case "PUT": handlePUTPOST(out, in, request, true); dispose=false; break;
                         default:
                             throwMethodNotImplementedResponse(out, new HttpResponse());
                     }
@@ -58,11 +60,20 @@ public class HttpRequestHandler implements Runnable {
                     break;
                 }
             }
-
         } catch (IOException ex) {
             throwServerErrorRequest(out, new HttpResponse());
             System.out.println(ex.getMessage());
         }
+
+        try {
+            if (dispose){
+                in.close();
+                out.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     /**

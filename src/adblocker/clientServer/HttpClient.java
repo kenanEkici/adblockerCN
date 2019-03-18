@@ -43,7 +43,7 @@ public class HttpClient {
                 case "POST":
                     sendPutOrPostRequest(host, route, portNumber, httpCommand);
                     break;
-                default: //throw exception
+                default:
             }
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
@@ -100,6 +100,7 @@ public class HttpClient {
                 String newBody = blocker.snipAds(body);
                 System.out.println(newBody);
                 resp.setBody(newBody);
+                System.out.println();
 
                 // WRITE NO AD RESULT TO HTML
                 bWriter.writeToHtml(newBody);
@@ -117,7 +118,7 @@ public class HttpClient {
                         handleHeaderGetOrHead(out, host, route + cleanUri, portNumber, httpCommand, !isLastFile);
 
                         // KEEP CLIENT ALIVE
-                        String line = in.readLine();
+                        //String line = in.readLine();
 
                         //---- READING RESPONSE HEADER
                         HttpResponse imageResp = new HttpResponse();
@@ -146,6 +147,7 @@ public class HttpClient {
                                 bWriter.writeToFileByLength(in, route + cleanUri, Integer.parseInt(length));
                             }
                         }
+                        System.out.println();
                     }
                 }
             }
