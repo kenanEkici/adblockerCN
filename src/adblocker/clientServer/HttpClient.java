@@ -69,7 +69,7 @@ public class HttpClient {
         Parser parser = new Parser();
 
         //----SENDING REQUEST
-        handleHeaderGetOrHead(out, host, route, portNumber, httpCommand, true);
+        handleHeaderGetOrHead(out, host, route, portNumber, httpCommand, !isHead);
 
         //----READING RESPONSE HEADER
         HttpResponse resp = new HttpResponse();
@@ -102,6 +102,7 @@ public class HttpClient {
                 resp.setBody(newBody);
                 System.out.println();
 
+
                 // WRITE NO AD RESULT TO HTML
                 bWriter.writeToHtml(newBody);
 
@@ -109,46 +110,42 @@ public class HttpClient {
 
                 // DOWNLOAD UNDERLYING IMAGES WITH SAME CONNECTION
                 for (int i = 0; i < uris.size(); i++) {
-                    if (!uris.get(i).equals("../adblocker/placeholder.png")) {
+                    String cleanUri = uris.get(i);
+                    boolean isLastFile = i == uris.size() - 1;
+                    //---- SENDING REQUEST
+                    handleHeaderGetOrHead(out, host, route + cleanUri, portNumber, httpCommand, !isLastFile);
 
-                        String cleanUri = uris.get(i);
-                        boolean isLastFile = i == uris.size() - 1;
+                    // KEEP CLIENT ALIVE
+                    String line = in.readLine();
 
-                        //---- SENDING REQUEST
-                        handleHeaderGetOrHead(out, host, route + cleanUri, portNumber, httpCommand, !isLastFile);
+                    //---- READING RESPONSE HEADER
+                    HttpResponse imageResp = new HttpResponse();
+                    handleResponseHeader(in, imageResp);
 
-                        // KEEP CLIENT ALIVE
-                        //String line = in.readLine();
+                    contentType = imageResp.getHeader().get("Content-Type");
+                    length = imageResp.getHeader().get("Content-Length");
+                    encoding = imageResp.getHeader().get("Transfer-Encoding");
 
-                        //---- READING RESPONSE HEADER
-                        HttpResponse imageResp = new HttpResponse();
-                        handleResponseHeader(in, imageResp);
+                    //---- READING RESPONSE BODY
+                    if (contentType.contains("image")) {
 
-                        contentType = imageResp.getHeader().get("Content-Type");
-                        length = imageResp.getHeader().get("Content-Length");
-                        encoding = imageResp.getHeader().get("Transfer-Encoding");
+                        System.out.println();
 
-                        //---- READING RESPONSE BODY
-                        if (contentType.contains("image")) {
-
-                            System.out.println();
-
-                            // CHUNKED
-                            if (encoding != null) {
-                                if (encoding.equals("chunked")) {
-                                    System.out.println("A file is being written by chunks");
-                                    bWriter.writeToFileByChunks(in, route + cleanUri);
-                                }
-                            }
-
-                            // BY CONTENT LENGTH
-                            else {
-                                System.out.println("A file is being written by content length");
-                                bWriter.writeToFileByLength(in, route + cleanUri, Integer.parseInt(length));
+                        // CHUNKED
+                        if (encoding != null) {
+                            if (encoding.equals("chunked")) {
+                                System.out.println("A file is being written by chunks");
+                                bWriter.writeToFileByChunks(in, route + cleanUri);
                             }
                         }
-                        System.out.println();
+
+                        // BY CONTENT LENGTH
+                        else {
+                            System.out.println("A file is being written by content length");
+                            bWriter.writeToFileByLength(in, route + cleanUri, Integer.parseInt(length));
+                        }
                     }
+                    System.out.println();
                 }
             }
         }
@@ -204,7 +201,7 @@ public class HttpClient {
      */
     private void handleHeaderGetOrHead(DataOutputStream out, String host, String route, int portNumber, String httpCommand, boolean keepAlive) throws IOException {
         out.writeBytes(httpCommand + " " + route + " " + "HTTP/1.1" + "\r\n");
-        out.writeBytes("Host: " + host + ":" + Integer.toString(portNumber) + "\r\n");
+        out.writeBytes("Host: " + host +  ":" + Integer.toString(portNumber) + "\r\n");
 
         if (keepAlive) {
             out.writeBytes("Connection: Keep Alive" + "\r\n");

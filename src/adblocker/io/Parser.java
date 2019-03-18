@@ -20,7 +20,11 @@ public class Parser {
         int index = body.indexOf("src=\"");
         while (index != -1) {
             int nextIndex = body.indexOf("\"", index + 5);
-            uris.add(body.substring(index + 5, nextIndex));
+
+            String uri = body.substring(index + 5, nextIndex);
+            if (!uri.equals("../adblocker/placeholder.png")) {
+                uris.add(uri);
+            }
             index = body.indexOf("src=\"", nextIndex);
         }
 

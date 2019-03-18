@@ -139,6 +139,7 @@ public class ByteWriter {
      */
     public void writeToFile(String path, String content, boolean append) {
         try {
+            File directory = new File("clientInputs");
             OpenOption[] openOptions;
             if(append){
                 openOptions = new OpenOption[]{
@@ -152,6 +153,9 @@ public class ByteWriter {
                         StandardOpenOption.WRITE,
                         StandardOpenOption.CREATE,
                         StandardOpenOption.TRUNCATE_EXISTING };
+            }
+            if (!directory.exists()) {
+                directory.mkdirs();
             }
             Files.write(Paths.get(path), content.getBytes(), openOptions);
         } catch (IOException ex) {

@@ -156,6 +156,7 @@ public class HttpRequestHandler implements Runnable {
                 if (!isHead) {
                     //---- WRITE RESPONSE BODY TO CLIENT
                     out.writeBytes(response.getBody());
+                    out.writeBytes("\r\n");
                     out.flush();
                 }
             }
@@ -185,6 +186,7 @@ public class HttpRequestHandler implements Runnable {
                     //---- WRITE RESPONSE BODY TO CLIENT
                     ByteWriter writer = new ByteWriter();
                     writer.writeFileToStream(file, out);
+                    out.writeBytes("\r\n");
                     out.flush();
                 }
             }
