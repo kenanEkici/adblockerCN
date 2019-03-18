@@ -69,7 +69,7 @@ public class HttpClient {
         Parser parser = new Parser();
 
         //----SENDING REQUEST
-        handleHeaderGetOrHead(out, host, route, portNumber, httpCommand, true);
+        handleHeaderGetOrHead(out, host, route, portNumber, httpCommand, !isHead);
 
         //----READING RESPONSE HEADER
         HttpResponse resp = new HttpResponse();
@@ -102,6 +102,16 @@ public class HttpClient {
                 resp.setBody(newBody);
                 System.out.println();
 
+                int index = newBody.indexOf("src=\"");
+                while (index != -1) {
+                    int nextIndex = newBody.indexOf("\"", index + 5);
+                    String uri = newBody.substring(index + 5, nextIndex);
+                    if(uri.substring(0, 1).equals("/")){
+                        newBody = newBody.substring(0, index + 5) + newBody.substring(index + 6);
+                    }
+                    index = newBody.indexOf("src=\"", nextIndex);
+                }
+
                 // WRITE NO AD RESULT TO HTML
                 bWriter.writeToHtml(newBody);
 
@@ -118,7 +128,7 @@ public class HttpClient {
                         handleHeaderGetOrHead(out, host, route + cleanUri, portNumber, httpCommand, !isLastFile);
 
                         // KEEP CLIENT ALIVE
-                        //String line = in.readLine();
+                        String line = in.readLine();
 
                         //---- READING RESPONSE HEADER
                         HttpResponse imageResp = new HttpResponse();
